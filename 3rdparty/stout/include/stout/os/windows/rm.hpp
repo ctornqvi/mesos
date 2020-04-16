@@ -82,9 +82,15 @@ inline Try<Nothing> rm(const std::string& path)
   // [3] http://pubs.opengroup.org/onlinepubs/009695399/functions/remove.html
   // [4] http://pubs.opengroup.org/onlinepubs/009695399/functions/rmdir.html
   const std::wstring longpath = ::internal::windows::longpath(path);
-  const BOOL result = os::stat::isdir(path)
-      ? ::RemoveDirectoryW(longpath.data())
-      : ::DeleteFileW(longpath.data());
+  BOOL result;
+
+  if (os::stat::isdir(path)) {
+    result = ::RemoveDirectoryW(longpath.data());
+  } else {
+    // Clear any file attribute to make sure we can remove read-only files etc.
+    SetFileAttributesW(longpath.data(), FILE_ATTRIBUTE_NORMAL);
+    result = ::DeleteFileW(longpath.data());
+  }
 
   if (!result) {
     return WindowsError();

@@ -85,6 +85,8 @@ inline Try<Nothing> rm(const std::string& path)
   BOOL result;
 
   if (os::stat::isdir(path)) {
+    // Clear any directory attribute to make sure we can remove read-only directories etc.
+    SetFileAttributesW(longpath.data(), FILE_ATTRIBUTE_DIRECTORY);
     result = ::RemoveDirectoryW(longpath.data());
   } else {
     // Clear any file attribute to make sure we can remove read-only files etc.
